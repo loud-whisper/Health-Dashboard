@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Health & Strength Dashboard</title>
+  <meta name="description" content="Local health dashboard — nutrition, strength, meditation, weight tracking." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --card: #12151c;
+      --card2: #1a1e2a;
+      --accent: #00e5ff;
+      --accent2: #a78bfa;
+      --accent3: #4ade80;
+      --accent4: #fb923c;
+      --accent5: #f472b6;
+      --danger: #f87171;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --border: #1e2433;
+      --r: 14px;
+      --glow: 0 0 20px rgba(0, 229, 255, .08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: clamp(16px, 3vw, 36px);
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent5));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: clamp(0.92rem, 2vw, 1.15rem);
+      font-weight: 700;
+      color: var(--text);
+      margin: 32px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Upload */
+    .upload-area {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--glow);
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .uc {
+      background: var(--card2);
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      transition: border-color .25s;
+    }
+
+    .uc:hover {
+      border-color: var(--accent);
+    }
+
+    .uc.loaded {
+      border-color: var(--accent3);
+      border-style: solid;
+    }
+
+    .uc label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .uc .fn {
+      font-size: 0.76rem;
+      color: var(--accent3);
+      min-height: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .uc input[type=file] {
+      display: none
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #1e40af, #6d28d9);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+      font-weight: 500;
+    }
+
+    .btn:hover {
+      opacity: .85;
+      transform: translateY(-1px);
+    }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-go {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000;
+      font-weight: 700;
+      padding: 12px 28px;
+      font-size: 0.9rem;
+      border-radius: 10px;
+    }
+
+    #status-bar {
+      flex: 1;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: none;
+    }
+
+    .upload-hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* Time range filter */
+    .range-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .range-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      padding: 5px 14px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .15s;
+    }
+
+    .range-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .range-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--glow);
+    }
+
+    .stat-card .s-lbl {
+      font-size: 0.66rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .stat-card .s-val {
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .stat-card .s-unit {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .stat-card .s-sub {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .pos {
+      color: #4ade80
+    }
+
+    .neg {
+      color: #f87171
+    }
+
+    /* Charts */
+    .charts-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+    }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px;
+      position: relative;
+    }
+
+    .chart-card:hover {
+      box-shadow: var(--glow);
+    }
+
+    .chart-card.wide {
+      grid-column: 1/-1
+    }
+
+    .chart-card h3 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-card canvas {
+      width: 100% !important;
+      max-height: 260px !important;
+    }
+
+    /* Strength */
+    .strength-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .s-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      min-width: 145px;
+      flex: 1 1 145px;
+      max-width: 220px;
+      transition: transform .2s;
+    }
+
+    .s-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .s-card .ex-name {
+      font-size: 0.66rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .s-card .ex-max {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .s-card .ex-unit {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .s-card .ex-meta {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    .ex-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .ex-header span {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .ex-clear {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      padding: 3px 10px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .ex-clear:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .ex-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+
+    .ex-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      padding: 5px 13px;
+      font-size: 0.73rem;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .ex-btn:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .ex-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .empty-hint {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .empty-hint .icon {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+    }
+
+    @media(max-width:480px) {
+      .strength-cards {
+        flex-direction: column;
+      }
+
+      .s-card {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Health & Strength Dashboard</h1>
+  <p class="subtitle">100% local — just upload your CSVs and click Generate. No data leaves your browser.</p>
+
+  <div class="upload-area">
+    <div class="upload-grid">
+      <div class="uc" id="ucStr">
+        <label>💪 Strength Workouts</label>
+        <button class="btn" onclick="pick('strFile')">Browse…</button>
+        <input type="file" id="strFile" accept=".csv" onchange="setLabel(this,'strName','ucStr')">
+        <div class="fn" id="strName">strength_workouts.csv</div>
+      </div>
+      <div class="uc" id="ucWeight">
+        <label>⚖️ Samsung Weight CSV</label>
+        <button class="btn" onclick="pick('weightFile')">Browse…</button>
+        <input type="file" id="weightFile" accept=".csv" onchange="setLabel(this,'weightName','ucWeight')">
+        <div class="fn" id="weightName">com.samsung.health.weight.*.csv</div>
+      </div>
+      <div class="uc" id="ucExercise">
+        <label>🏋️ Samsung Exercise CSV</label>
+        <button class="btn" onclick="pick('exFile')">Browse…</button>
+        <input type="file" id="exFile" accept=".csv" onchange="setLabel(this,'exName','ucExercise')">
+        <div class="fn" id="exName">com.samsung.shealth.exercise.*.csv</div>
+      </div>
+      <div class="uc" id="ucMfp">
+        <label>🥗 MFP Daily Calories CSV <span style="font-size:.6rem;color:#475569">(run parse_mfp_report.py
+            first)</span></label>
+        <button class="btn" onclick="pick('mfpFile')">Browse…</button>
+        <input type="file" id="mfpFile" accept=".csv" onchange="setLabel(this,'mfpName','ucMfp')">
+        <div class="fn" id="mfpName">mfp_daily_calories.csv</div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-go" onclick="loadAll()">⚡ Generate Dashboard</button>
+      <div id="status-bar"></div>
+    </div>
+    <div class="upload-hint">Upload any/all files → click Generate. Samsung CSVs are parsed directly. For MFP, run
+      <code>python3 parse_mfp_report.py</code> once → upload the <code>mfp_daily_calories.csv</code>.
+    </div>
+  </div>
+
+  <div id="dashboard"></div>
+
+  <script>
+    // ═══════════════════════════════════════════════════
+    // UTIL
+    // ═══════════════════════════════════════════════════
+    const pick = id => document.getElementById(id).click();
+    function setLabel(inp, id, ucId) {
+      document.getElementById(id).textContent = inp.files[0]?.name || 'No file';
+      if (ucId && inp.files[0]) document.getElementById(ucId).classList.add('loaded');
+    }
+    function readFile(inp) {
+      return new Promise((res, rej) => {
+        if (!inp.files[0]) return res(null);
+        const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsText(inp.files[0]);
+      });
+    }
+    function status(msg) { const b = document.getElementById('status-bar'); b.style.display = 'block'; b.textContent = msg; }
+
+    function splitLine(line) {
+      const r = []; let cur = '', q = false;
+      for (const c of line) { if (c === '"') q = !q; else if (c === ',' && !q) { r.push(cur); cur = ''; } else cur += c; }
+      r.push(cur); return r;
+    }
+
+    function parseCSV(text, skipSamsungMeta = false) {
+      if (!text) return [];
+      const lines = text.split('\n').filter(l => l.trim());
+      let start = 0;
+      if (skipSamsungMeta) {
+        // Samsung CSVs have a metadata line first, then headers
+        if (lines[0].replace(/\ufeff/, '').startsWith('com.samsung')) start = 1;
+      }
+      const rawHdrs = splitLine(lines[start]);
+      const hdrs = rawHdrs.map(h => h.trim().replace(/^\ufeff/, '').replace(/"/g, ''));
+      const rows = [];
+      for (let i = start + 1; i < lines.length; i++) {
+        const vals = splitLine(lines[i]); const row = {};
+        hdrs.forEach((h, j) => { if (h) row[h] = (vals[j] || '').trim().replace(/"/g, ''); });
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    const fmt = d => d ? d.toISOString().slice(0, 10) : '';
+    const pct = (a, b) => b && b !== 0 ? ((a - b) / b * 100).toFixed(1) : null;
+    const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    const sum = arr => arr.reduce((a, b) => a + b, 0);
+    function movingAvg(data, w = 7) {
+      return data.map((d, i) => {
+        const s = Math.max(0, i - w + 1);
+        return { x: d.x, y: Math.round(avg(data.slice(s, i + 1).map(v => v.y))) };
+      });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // PARSERS — all parsing happens in browser JS
+    // ═══════════════════════════════════════════════════
+
+    // Samsung Weight CSV
+    function parseWeight(text) {
+      if (!text) return [];
+      const rows = parseCSV(text, true);
+      const map = {};
+      for (const r of rows) {
+        const ts = r['start_time']; if (!ts) continue;
+        const d = new Date(ts); if (isNaN(d)) continue;
+        const key = fmt(d);
+        const w = parseFloat(r['weight']);
+        const bf = parseFloat(r['body_fat']);
+        if (!isNaN(w) && w > 20 && w < 300) {
+          map[key] = { date: key, weight: w, bodyFat: !isNaN(bf) ? bf : null };
+        }
+      }
+      return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    // Samsung Exercise CSV — separates real exercise from meditation
+    const AUTO_DETECTED = new Set([0]);
+
+    function parseExercise(text) {
+      if (!text) return { exercise: [], meditation: [] };
+      const rows = parseCSV(text, true);
+      const exMap = {}, medMap = {};
+
+      for (const r of rows) {
+        const startCol = r['com.samsung.health.exercise.start_time'] || r['start_time'];
+        if (!startCol) continue;
+        const d = new Date(startCol); if (isNaN(d)) continue;
+        const key = fmt(d);
+
+        const exType = parseInt(r['com.samsung.health.exercise.exercise_type'] || r['exercise_type'] || '0');
+        const customId = r['custom_id'];
+
+        const dur = (parseFloat(r['com.samsung.health.exercise.duration'] || r['duration']) || 0) / 60000;
+        const cal = parseFloat(r['com.samsung.health.exercise.calorie'] || r['calorie']) || 0;
+
+        // Custom meditation ID has exercise_type 0, so we must check customId first
+        if (customId === 'm2u31389_1gq') {
+          if (!medMap[key]) medMap[key] = { date: key, min: 0 };
+          medMap[key].min += dur;
+        } else if (!AUTO_DETECTED.has(exType)) {
+          if (!exMap[key]) exMap[key] = { date: key, min: 0, cal: 0 };
+          exMap[key].min += dur; exMap[key].cal += cal;
+        }
+      }
+
+      return {
+        exercise: Object.values(exMap).sort((a, b) => a.date.localeCompare(b.date)),
+        meditation: Object.values(medMap).sort((a, b) => a.date.localeCompare(b.date))
+      };
+    }
+
+    // Strength Workouts CSV
+    function parseStrength(text) {
+      if (!text) return { byEx: {}, exercises: [], dailyVol: [] };
+      const rows = parseCSV(text);
+      const byEx = {}, dailyMap = {};
+
+      for (const r of rows) {
+        const ex = (r['Exercise'] || '').trim();
+        const date = (r['Date'] || '').trim();
+        const weight = parseFloat(r['Weight']);
+        const reps = parseFloat(r['Reps']) || 0;
+        if (!ex || !date) continue;
+
+        // Per-exercise max tracking
+        if (!isNaN(weight)) {
+          if (!byEx[ex]) byEx[ex] = {};
+          if (!byEx[ex][date] || weight > byEx[ex][date]) byEx[ex][date] = weight;
+        }
+
+        // Daily volume
+        if (!dailyMap[date]) dailyMap[date] = { date, sets: 0, vol: 0, exercises: new Set() };
+        dailyMap[date].sets++;
+        dailyMap[date].vol += reps * (isNaN(weight) ? 0 : weight);
+        dailyMap[date].exercises.add(ex);
+      }
+
+      const exercises = Object.keys(byEx).sort((a, b) => Object.keys(byEx[b]).length - Object.keys(byEx[a]).length);
+      const dailyVol = Object.values(dailyMap).map(d => ({
+        date: d.date, sets: d.sets, vol: Math.round(d.vol), exercises: d.exercises.size
+      })).sort((a, b) => a.date.localeCompare(b.date));
+
+      return { byEx, exercises, dailyVol };
+    }
+
+    // MFP Daily Calories CSV (from parse_mfp_report.py)
+    function parseMFP(text) {
+      if (!text) return [];
+      const rows = parseCSV(text);
+      return rows.map(r => ({
+        date: r['Date'] || r['date'] || '',
+        cal: parseFloat(r['MFP_Calories'] || r['Calories']) || 0,
+        protein: parseFloat(r['Protein_g']) || 0,
+        carbs: parseFloat(r['Carbs_g']) || 0,
+        fat: parseFloat(r['Fat_g']) || 0,
+        sugar: parseFloat(r['Sugar_g']) || 0,
+        fiber: parseFloat(r['Fiber_g']) || 0,
+      })).filter(r => r.date && r.cal > 50).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    // ═══════════════════════════════════════════════════
+    // CHART HELPERS
+    // ═══════════════════════════════════════════════════
+    const charts = {};
+    function mkChart(id, cfg) {
+      const el = document.getElementById(id); if (!el) return;
+      if (charts[id]) charts[id].destroy();
+      charts[id] = new Chart(el.getContext('2d'), cfg);
+    }
+    const GRID = { color: 'rgba(255,255,255,0.04)' };
+    const TICK = { color: '#64748b', font: { size: 10, family: 'Inter' } };
+    const BASE = {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' }, boxWidth: 12, padding: 14 } },
+        tooltip: { mode: 'index', intersect: false, backgroundColor: '#1a1e2a', titleColor: '#e2e8f0', bodyColor: '#94a3b8', borderColor: '#252a3a', borderWidth: 1, padding: 10, cornerRadius: 8 }
+      }
+    };
+    function lineDS(label, data, color, fill = false, dash = false) {
+      return { label, data, borderColor: color, backgroundColor: color + '18', borderWidth: 2, pointRadius: 1.5, pointHoverRadius: 5, tension: 0.35, fill, borderDash: dash ? [5, 3] : undefined };
+    }
+    function barDS(label, data, color) {
+      return { label, data, backgroundColor: color + 'cc', borderColor: color, borderWidth: 0, borderRadius: 2, maxBarThickness: 12, minBarLength: 3 };
+    }
+    function timeX(unit = 'week') { return { type: 'time', time: { unit, tooltipFormat: 'MMM d, yyyy' }, grid: GRID, ticks: { ...TICK, maxTicksLimit: 12 } }; }
+    function yAx(lbl, zero = false) {
+      const ax = { grid: GRID, ticks: TICK, title: lbl ? { display: true, text: lbl, color: '#64748b', font: { size: 10, family: 'Inter' } } : undefined };
+      if (zero) ax.min = 0;
+      return ax;
+    }
+    const COLORS = ['#00e5ff', '#a78bfa', '#4ade80', '#fb923c', '#f472b6', '#facc15', '#38bdf8', '#f87171', '#34d399', '#c084fc', '#e879f9', '#a3e635'];
+
+    // ═══════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════
+    let G = { weights: [], exercise: [], meditation: [], str: null, mfp: [], ranges: { weight: 'all', nutrition: 'all', strength: 'all', meditation: 'all', cardio: 'all' } };
+
+    // ═══════════════════════════════════════════════════
+    // LOAD
+    // ═══════════════════════════════════════════════════
+    async function loadAll() {
+      status('Reading files…');
+      const [strText, weightText, exText, mfpText] = await Promise.all([
+        readFile(document.getElementById('strFile')),
+        readFile(document.getElementById('weightFile')),
+        readFile(document.getElementById('exFile')),
+        readFile(document.getElementById('mfpFile')),
+      ]);
+      status('Parsing…');
+
+      G.weights = parseWeight(weightText);
+      const exResult = parseExercise(exText);
+      G.exercise = exResult.exercise;
+      G.meditation = exResult.meditation;
+      G.str = parseStrength(strText);
+      G.mfp = parseMFP(mfpText);
+
+      const parts = [];
+      if (G.weights.length) parts.push(`${G.weights.length} weight readings`);
+      if (G.exercise.length) parts.push(`${G.exercise.length} exercise days`);
+      if (G.meditation.length) parts.push(`${G.meditation.length} meditation days`);
+      if (G.str?.exercises.length) parts.push(`${G.str.exercises.length} exercises tracked`);
+      if (G.mfp.length) parts.push(`${G.mfp.length} nutrition days`);
+      status('✅ ' + (parts.join(' | ') || 'No data loaded'));
+      render();
+    }
+
+    function filterByRange(data, section, dateField = 'date') {
+      const range = G.ranges[section];
+      if (range === 'all') return data;
+      const now = new Date();
+      const months = range === '3m' ? 3 : range === '6m' ? 6 : 12;
+      const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate());
+      const cutStr = fmt(cutoff);
+      return data.filter(r => (r[dateField] || r.date) >= cutStr);
+    }
+
+    function setRange(section, range) {
+      G.ranges[section] = range;
+      document.querySelectorAll(`.range-btn[data-section="${section}"]`).forEach(b => {
+        b.classList.toggle('active', b.dataset.range === range);
+      });
+      if (section === 'weight') renderWeight();
+      else if (section === 'nutrition') renderNutrition();
+      else if (section === 'meditation') renderMeditation();
+      else if (section === 'cardio') renderExercise();
+      else if (section === 'strength') updateStrength();
+    }
+
+    function renderRangeBar(section) {
+      const r = G.ranges[section];
+      return `<div class="range-bar" style="margin-top: -8px; margin-bottom: 18px;">
+        <button class="range-btn${r === '3m' ? ' active' : ''}" data-section="${section}" data-range="3m" onclick="setRange('${section}','3m')">3 Months</button>
+        <button class="range-btn${r === '6m' ? ' active' : ''}" data-section="${section}" data-range="6m" onclick="setRange('${section}','6m')">6 Months</button>
+        <button class="range-btn${r === '1y' ? ' active' : ''}" data-section="${section}" data-range="1y" onclick="setRange('${section}','1y')">1 Year</button>
+        <button class="range-btn${r === 'all' ? ' active' : ''}" data-section="${section}" data-range="all" onclick="setRange('${section}','all')">All Time</button>
+      </div>`;
+    }
+
+    // ═══════════════════════════════════════════════════
+    // RENDER
+    // ═══════════════════════════════════════════════════
+    function render() {
+      const dash = document.getElementById('dashboard');
+      const str = G.str;
+      const hasWeight = G.weights.length > 0;
+      const hasMFP = G.mfp.length > 0;
+      const hasMed = G.meditation.length > 0;
+      const hasStr = str && str.exercises.length > 0;
+      const hasEx = G.exercise.length > 0;
+
+      dash.innerHTML = `
+        ${hasWeight ? `<h2>⚖️ Body Composition</h2>
+        ${renderRangeBar('weight')}
+        <div class="stats-grid" id="weightStats"></div>
+        <div class="charts-grid" id="weightCharts"></div>` : ''}
+
+        ${hasMFP ? `<h2>🥗 Nutrition</h2>
+        ${renderRangeBar('nutrition')}
+        <div class="stats-grid" id="nutritionStats"></div>
+        <div class="charts-grid" id="nutritionCharts"></div>` : ''}
+
+        ${hasStr ? `<h2>💪 Strength Progression</h2>
+        ${renderRangeBar('strength')}
+        <div id="strCards" class="strength-cards"></div>
+        <div class="ex-header">
+          <span>${str.exercises.length} exercises</span>
+          <button class="ex-clear" onclick="clearAll()">Clear all</button>
+          <button class="ex-clear" style="border-color:var(--accent3);color:var(--accent3)" onclick="selectTop5()">Top 5</button>
+        </div>
+        <div class="ex-selector" id="exSelector"></div>
+        <div class="chart-card wide" style="margin-bottom:18px"><h3>Max Weight per Session (lbs)</h3><canvas id="strengthChart" height="55"></canvas></div>
+        <div class="charts-grid" style="margin-bottom:20px" id="strCharts"></div>` : ''}
+
+        ${hasMed ? `<h2>🧘 Meditation</h2>
+        ${renderRangeBar('meditation')}
+        <div class="stats-grid" id="medStats"></div>
+        <div class="charts-grid" id="medCharts"></div>` : ''}
+
+        ${hasEx ? `<h2>🏃 Cardio / Exercise</h2>
+        ${renderRangeBar('cardio')}
+        <div class="stats-grid" id="exStats"></div>
+        <div class="charts-grid" id="exCharts"></div>` : ''}
+      `;
+
+      // Build exercise selector
+      if (hasStr) {
+        const sel = document.getElementById('exSelector');
+        str.exercises.forEach(ex => {
+          const btn = document.createElement('button');
+          btn.className = 'ex-btn';
+          btn.textContent = ex.length > 30 ? ex.slice(0, 28) + '…' : ex;
+          btn.title = ex; btn.dataset.ex = ex;
+          btn.addEventListener('click', () => { btn.classList.toggle('active'); updateStrength(); });
+          sel.appendChild(btn);
+        });
+        selectTop5();
+      }
+
+      renderSections();
+    }
+
+    function renderSections() {
+      renderWeight();
+      renderNutrition();
+      renderMeditation();
+      renderExercise();
+      // Strength is updated via selectTop5/updateStrength
+      if (G.str?.exercises.length) updateStrength();
+    }
+
+    // ── Weight ────────────────────────────────────────
+    function renderWeight() {
+      const d = filterByRange(G.weights, 'weight');
+      if (!d.length) return;
+
+      const latest = d[d.length - 1];
+      const first = d[0];
+      const change = (latest.weight - first.weight).toFixed(1);
+      const hasBF = d.some(r => r.bodyFat !== null);
+      const latestBF = hasBF ? d.filter(r => r.bodyFat !== null).pop() : null;
+
+      const statsDiv = document.getElementById('weightStats');
+      if (statsDiv) {
+        statsDiv.innerHTML = `
+          <div class="stat-card">
+            <div class="s-lbl">Latest Weight</div>
+            <div class="s-val" style="color:var(--accent2)">${latest.weight.toFixed(1)}</div>
+            <div class="s-unit">kg</div>
+            <div class="s-sub">${latest.date}</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-lbl">Change</div>
+            <div class="s-val"><span class="${parseFloat(change) <= 0 ? 'pos' : 'neg'}">${change}</span></div>
+            <div class="s-unit">kg since ${first.date}</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-lbl">Measurements</div>
+            <div class="s-val" style="color:var(--accent)">${d.length}</div>
+            <div class="s-unit">recordings</div>
+          </div>
+          ${latestBF ? `<div class="stat-card">
+            <div class="s-lbl">Body Fat</div>
+            <div class="s-val" style="color:var(--accent4)">${latestBF.bodyFat.toFixed(1)}</div>
+            <div class="s-unit">% (${latestBF.date})</div>
+          </div>` : ''}
+        `;
+      }
+
+      const chartsDiv = document.getElementById('weightCharts');
+      if (!chartsDiv) return;
+      chartsDiv.innerHTML = `
+        <div class="chart-card${hasBF ? '' : ' wide'}"><h3>Weight Trend (kg)</h3><canvas id="weightChart" height="${hasBF ? 140 : 60}"></canvas></div>
+        ${hasBF ? `<div class="chart-card"><h3>Body Fat %</h3><canvas id="bfChart" height="140"></canvas></div>` : ''}
+      `;
+
+      const timeUnit = d.length > 365 ? 'month' : d.length > 60 ? 'week' : 'day';
+      mkChart('weightChart', { type: 'line', data: { datasets: [lineDS('Weight (kg)', d.map(r => ({ x: r.date, y: r.weight })), '#a78bfa', true)] }, options: { ...BASE, scales: { x: timeX(timeUnit), y: yAx('kg') } } });
+
+      if (hasBF) {
+        const bfData = d.filter(r => r.bodyFat !== null).map(r => ({ x: r.date, y: r.bodyFat }));
+        if (bfData.length) {
+          mkChart('bfChart', { type: 'line', data: { datasets: [lineDS('Body Fat %', bfData, '#fb923c', true)] }, options: { ...BASE, scales: { x: timeX(timeUnit), y: yAx('%') } } });
+        }
+      }
+    }
+
+    // ── Nutrition ─────────────────────────────────────
+    function renderNutrition() {
+      const d = filterByRange(G.mfp, 'nutrition');
+      if (!d.length) return;
+
+      const avgCal = Math.round(avg(d.map(r => r.cal)));
+      const avgProt = Math.round(avg(d.map(r => r.protein)));
+      const avgCarbs = Math.round(avg(d.map(r => r.carbs)));
+      const avgFat = Math.round(avg(d.map(r => r.fat)));
+
+      const r7 = d.slice(-7), p7 = d.slice(-14, -7);
+      const r7cal = Math.round(avg(r7.map(r => r.cal)));
+      const calTrend = p7.length ? pct(r7cal, Math.round(avg(p7.map(r => r.cal)))) : null;
+
+      const statsDiv = document.getElementById('nutritionStats');
+      if (statsDiv) {
+        statsDiv.innerHTML = `
+          <div class="stat-card">
+            <div class="s-lbl">Avg Calories</div>
+            <div class="s-val" style="color:var(--accent4)">${avgCal.toLocaleString()}</div>
+            <div class="s-unit">kcal / day</div>
+            ${calTrend ? `<div class="s-sub">7d trend: <span class="${parseFloat(calTrend) >= 0 ? 'neg' : 'pos'}">${parseFloat(calTrend) >= 0 ? '+' : ''}${calTrend}%</span></div>` : ''}
+          </div>
+          <div class="stat-card"><div class="s-lbl">Avg Protein</div><div class="s-val" style="color:var(--accent)">${avgProt}g</div><div class="s-unit">${d.length} days</div></div>
+          <div class="stat-card"><div class="s-lbl">Avg Carbs</div><div class="s-val" style="color:var(--accent3)">${avgCarbs}g</div></div>
+          <div class="stat-card"><div class="s-lbl">Avg Fat</div><div class="s-val" style="color:var(--accent5)">${avgFat}g</div></div>
+        `;
+      }
+
+      const chartsDiv = document.getElementById('nutritionCharts');
+      if (!chartsDiv) return;
+      chartsDiv.innerHTML = `
+        <div class="chart-card wide"><h3>Daily Calories (7-day avg)</h3><canvas id="calChart" height="60"></canvas></div>
+        <div class="chart-card"><h3>Protein (g/day)</h3><canvas id="protChart" height="140"></canvas></div>
+        <div class="chart-card"><h3>Macro Split (by kcal)</h3><canvas id="macroChart" height="140"></canvas></div>
+      `;
+
+      const calData = d.map(r => ({ x: r.date, y: r.cal }));
+      mkChart('calChart', { type: 'line', data: { datasets: [barDS('Daily', calData, '#fb923c'), lineDS('7d Avg', movingAvg(calData), '#fb923c')] }, options: { ...BASE, scales: { x: timeX(), y: yAx('kcal', true) } } });
+
+      const protData = d.map(r => ({ x: r.date, y: r.protein }));
+      mkChart('protChart', { type: 'line', data: { datasets: [lineDS('Protein', protData, '#00e5ff', true), lineDS('7d Avg', movingAvg(protData), '#00e5ff', false, true)] }, options: { ...BASE, scales: { x: timeX(), y: yAx('g', true) } } });
+
+      mkChart('macroChart', {
+        type: 'doughnut',
+        data: { labels: ['Protein', 'Carbs', 'Fat'], datasets: [{ data: [avgProt * 4, avgCarbs * 4, avgFat * 9], backgroundColor: ['#00e5ff', '#4ade80', '#f472b6'], borderWidth: 0 }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 16 } }, tooltip: { callbacks: { label: ctx => { const t = ctx.dataset.data.reduce((a, b) => a + b, 0); return `${ctx.label}: ${((ctx.raw / t) * 100).toFixed(0)}% (${[avgProt, avgCarbs, avgFat][ctx.dataIndex]}g)`; } } } } }
+      });
+    }
+
+    // ── Meditation ────────────────────────────────────
+    function renderMeditation() {
+      const d = filterByRange(G.meditation, 'meditation');
+      if (!d.length) return;
+
+      const totalMin = Math.round(sum(d.map(r => r.min)));
+      const avgMin = Math.round(avg(d.map(r => r.min)));
+      const streak = calcStreak(d);
+
+      const statsDiv = document.getElementById('medStats');
+      if (statsDiv) {
+        statsDiv.innerHTML = `
+          <div class="stat-card"><div class="s-lbl">Sessions</div><div class="s-val" style="color:var(--accent2)">${d.length}</div></div>
+          <div class="stat-card"><div class="s-lbl">Total Time</div><div class="s-val" style="color:var(--accent2)">${(totalMin / 60).toFixed(1)}</div><div class="s-unit">hours</div></div>
+          <div class="stat-card"><div class="s-lbl">Avg Session</div><div class="s-val" style="color:var(--accent2)">${avgMin}</div><div class="s-unit">min</div></div>
+          <div class="stat-card"><div class="s-lbl">Best Streak</div><div class="s-val" style="color:var(--accent3)">${streak}</div><div class="s-unit">consecutive days</div></div>
+        `;
+      }
+
+      const chartsDiv = document.getElementById('medCharts');
+      if (!chartsDiv) return;
+      chartsDiv.innerHTML = `<div class="chart-card wide"><h3>Daily Meditation (min)</h3><canvas id="medChart" height="60"></canvas></div>`;
+      mkChart('medChart', { type: 'bar', data: { datasets: [barDS('Minutes', d.map(r => ({ x: r.date, y: Math.round(r.min) })), '#a78bfa')] }, options: { ...BASE, scales: { x: timeX(), y: yAx('min', true) } } });
+    }
+
+    function calcStreak(data) {
+      if (!data.length) return 0;
+      let max = 1, cur = 1;
+      for (let i = 1; i < data.length; i++) {
+        const prev = new Date(data[i - 1].date + 'T12:00:00');
+        const curr = new Date(data[i].date + 'T12:00:00');
+        const diff = (curr - prev) / 86400000;
+        if (diff === 1) { cur++; if (cur > max) max = cur; } else cur = 1;
+      }
+      return max;
+    }
+
+    // ── Cardio/Exercise ──────────────────────────────
+    function renderExercise() {
+      const d = filterByRange(G.exercise, 'cardio');
+      if (!d.length) return;
+
+      const totalMin = Math.round(sum(d.map(r => r.min)));
+
+      const statsDiv = document.getElementById('exStats');
+      if (statsDiv) {
+        statsDiv.innerHTML = `
+          <div class="stat-card"><div class="s-lbl">Exercise Days</div><div class="s-val" style="color:var(--accent3)">${d.length}</div></div>
+          <div class="stat-card"><div class="s-lbl">Total Time</div><div class="s-val" style="color:var(--accent3)">${(totalMin / 60).toFixed(0)}</div><div class="s-unit">hours</div></div>
+          <div class="stat-card"><div class="s-lbl">Avg Session</div><div class="s-val" style="color:var(--accent3)">${Math.round(avg(d.map(r => r.min)))}</div><div class="s-unit">min</div></div>
+        `;
+      }
+
+      const chartsDiv = document.getElementById('exCharts');
+      if (!chartsDiv) return;
+      chartsDiv.innerHTML = `<div class="chart-card wide"><h3>Cardio Duration (min/day)</h3><canvas id="exChart" height="60"></canvas></div>`;
+      mkChart('exChart', { type: 'bar', data: { datasets: [barDS('Minutes', d.map(r => ({ x: r.date, y: Math.round(r.min) })), '#4ade80')] }, options: { ...BASE, scales: { x: timeX(), y: yAx('min', true) } } });
+    }
+
+    // ── Strength ──────────────────────────────────────
+    function selectTop5(doUpdate = true) {
+      document.querySelectorAll('.ex-btn').forEach((b, i) => b.classList.toggle('active', i < 5));
+      if (doUpdate) updateStrength();
+    }
+    function clearAll() {
+      document.querySelectorAll('.ex-btn').forEach(b => b.classList.remove('active'));
+      updateStrength();
+    }
+
+    function updateStrength() {
+      const selected = Array.from(document.querySelectorAll('.ex-btn.active')).map(b => b.dataset.ex);
+      const str = G.str;
+
+      const cards = document.getElementById('strCards');
+      if (!cards) return;
+      if (!selected.length) {
+        cards.innerHTML = '<div class="empty-hint"><div class="icon">👆</div>Select exercises above</div>';
+        if (charts['strengthChart']) charts['strengthChart'].destroy();
+        return;
+      }
+
+      cards.innerHTML = '';
+      selected.forEach((ex, idx) => {
+        let sessions = Object.entries(str.byEx[ex] || {}).sort((a, b) => a[0].localeCompare(b[0]));
+        sessions = filterByRange(sessions.map(([d, w]) => ({ date: d, w })), 'strength');
+        if (!sessions.length) return;
+        const maxAll = Math.max(...sessions.map(s => s.w));
+        const first = sessions[0].w, recent = sessions[sessions.length - 1].w;
+        const prog = pct(recent, first);
+        const color = COLORS[idx % COLORS.length];
+        const card = document.createElement('div'); card.className = 's-card';
+        card.innerHTML = `<div class="ex-name" title="${ex}" style="color:${color}">${ex}</div>
+          <div class="ex-max" style="color:${color}">${maxAll}</div><div class="ex-unit">lbs max</div>
+          <div class="ex-meta">Start: ${first} → Recent: ${recent} lbs<br>
+          <span class="${prog !== null && parseFloat(prog) >= 0 ? 'pos' : 'neg'}">${prog !== null ? (parseFloat(prog) >= 0 ? '+' : '') + prog + '%' : '—'}</span></div>`;
+        cards.appendChild(card);
+      });
+
+      // Progression chart
+      const datasets = selected.map((ex, idx) => {
+        let sessions = Object.entries(str.byEx[ex] || {}).sort((a, b) => a[0].localeCompare(b[0]));
+        sessions = filterByRange(sessions.map(([d, w]) => ({ date: d, w })), 'strength');
+        const color = COLORS[idx % COLORS.length];
+        return lineDS(ex.length > 25 ? ex.slice(0, 23) + '…' : ex, sessions.map(s => ({ x: s.date, y: s.w })), color);
+      });
+      mkChart('strengthChart', { type: 'line', data: { datasets }, options: { ...BASE, scales: { x: timeX(), y: yAx('lbs') } } });
+
+      // Volume + sets
+      const strCharts = document.getElementById('strCharts');
+      if (strCharts) {
+        strCharts.innerHTML = `
+          <div class="chart-card"><h3>Daily Volume (lbs)</h3><canvas id="volumeChart" height="140"></canvas></div>
+          <div class="chart-card"><h3>Sets per Day</h3><canvas id="setsChart" height="140"></canvas></div>
+        `;
+        const dv = filterByRange(str.dailyVol, 'strength');
+        if (dv.length) {
+          mkChart('volumeChart', { type: 'bar', data: { datasets: [barDS('Volume', dv.map(r => ({ x: r.date, y: r.vol })), '#4ade80')] }, options: { ...BASE, scales: { x: timeX(), y: yAx('lbs', true) } } });
+          mkChart('setsChart', { type: 'bar', data: { datasets: [barDS('Sets', dv.map(r => ({ x: r.date, y: r.sets })), '#38bdf8')] }, options: { ...BASE, scales: { x: timeX(), y: yAx('sets', true) } } });
+        }
+      }
+    }
+
+    // Initial
+    document.getElementById('dashboard').innerHTML = `<div class="empty-hint"><div class="icon">📊</div><p>Upload your files and click <strong>⚡ Generate Dashboard</strong></p></div>`;
+  </script>
+</body>
+
+</html>
