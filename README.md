@@ -46,5 +46,9 @@ This repository provides a parser script (`convert_mfp.py` and `health_data/pars
 3. Copy the text from the page (or save as PDF/HTML and convert to text) and save it.
 4. Run the provided Python scripts to clean this text dump into a formatted `mfp_daily_calories.csv` that the dashboard can read.
 
+## Credits / Author
+Created and maintained by [@loud-whisper](https://github.com/loud-whisper). 
+If you find this dashboard helpful for reclaiming your personal health data from the cloud, feel free to star the repository!
+
 ## License
-MIT License. Feel free to fork and customize for your own health tracking needs!
+MIT License. Feel free to fork and customize for your own health tracking needs! By [@loud-whisper](https://github.com/loud-whisper).
