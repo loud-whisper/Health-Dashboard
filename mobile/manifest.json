@@ -1,0 +1,14 @@
+{
+  "name": "Health Dashboard",
+  "short_name": "HealthDash",
+  "description": "Private, offline health & fitness dashboard. Track weight, nutrition, strength, meditation, and cardio from Samsung Health, Caliber, and MyFitnessPal exports.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#00e5ff",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -16,3 +16,7 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Mobile build artifacts (keep APK + web assets, ignore toolchain)
+mobile/apk-build/
+mobile/gradle_*.log

@@ -46,6 +46,36 @@ This repository provides a parser script (`convert_mfp.py` and `health_data/pars
 3. Copy the text from the page (or save as PDF/HTML and convert to text) and save it.
 4. Run the provided Python scripts to clean this text dump into a formatted `mfp_daily_calories.csv` that the dashboard can read.
 
+## 📱 Mobile App
+
+This dashboard also works on your phone or tablet! There are two ways to use it:
+
+### Android — Install the APK
+
+1. On your Android phone, download `HealthDashboard.apk` from the [`mobile/`](mobile/) folder in this repo (or from the [direct link](mobile/HealthDashboard.apk)).
+2. Open the downloaded file. Android will ask you to allow installing from unknown sources — tap **Allow** (this is safe, and you can disable it after).
+3. Tap **Install**.
+4. Open the app, select your CSV files, and tap **⚡ Generate Dashboard**.
+
+> **Tip:** Transfer your CSV export files to your phone first (via USB, email, Google Drive, etc.). The app runs 100% offline once installed.
+
+### iPhone / iPad — Add to Home Screen (PWA)
+
+Since Apple doesn't allow sideloading apps, you can use the mobile web version instead. It looks and feels like a native app:
+
+1. On your iPhone or iPad, open **Safari** (must be Safari, not Chrome).
+2. Go to: `https://loud-whisper.github.io/Health-Dashboard/mobile/` *(or open the `mobile/index.html` file locally)*.
+3. Tap the **Share** button (the square with an arrow pointing up).
+4. Scroll down and tap **Add to Home Screen**.
+5. Tap **Add**.
+6. The app icon will appear on your home screen. Open it — it runs fullscreen, just like a real app!
+
+### Mobile Features
+- **Portrait & Landscape:** The layout automatically adapts when you rotate your device.
+- **Touch-friendly:** Large tap targets for file uploads and buttons.
+- **Collapsible sections:** Tap any section header to collapse/expand it.
+- **Offline:** Once loaded, the app works without internet.
+
 ## Credits / Author
 Created and maintained by [@loud-whisper](https://github.com/loud-whisper). 
 If you find this dashboard helpful for reclaiming your personal health data from the cloud, feel free to star the repository!
